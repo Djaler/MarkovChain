@@ -1,42 +1,36 @@
 package com.github.djaler.markovchain
 
+import java.io.File
+
 /**
  * @author Kirill Romanov
  */
+private val SENTENCES_DELIMITERS = arrayOf(".", "?", "!", "\n", "(", ")", ":", ";")
+private val WORDS_DELIMITERS = arrayOf(" ", "\t", "\"")
+private val MEANINGFUL_DELIMITERS = arrayOf(",", "—")
+private val MEANINGFUL_DELIMITERS_SPLIT_REGEX = Regex(MEANINGFUL_DELIMITERS.joinToString("|") { "\\b(?=$it)" })
+
+fun fileToSentences(file: File): List<Sentence> {
+    return textToSentences(file.readText())
+}
+
 fun textToSentences(text: String): List<Sentence> {
-    return text.split(Regex("""[.?!]"""))
+    return text.split(*SENTENCES_DELIMITERS)
         .asSequence()
-        .filterNot { it.isEmpty() }
+        .filter { it.isNotBlank() }
         .map { it.toSentence() }
-        .filterNot { it.isEmpty() }
+        .filter { it.tokens.size > 1 }
         .toList()
 }
 
 private fun String.toSentence(): Sentence {
     return this.trim()
-        .split(Regex("\\b(?=,)|\\b(?=-)|\\s"))
-//        .split(Regex("""[,\-"\s]"""))
+        .split(*WORDS_DELIMITERS)
+        .flatMap { it.split(MEANINGFUL_DELIMITERS_SPLIT_REGEX) }
         .filterNot { it.isEmpty() }
         .map { it.toLowerCase() }
-        .let { Sentence(it.toTokens().withPrependedAndAppended(StartToken, EndToken)) }
+        .map { StringToken(it) }
+        .let { Sentence(it) }
 }
 
-private fun <T> List<T>.withPrependedAndAppended(prepended: T, appended: T): List<T> {
-    return listOf(prepended) + this + listOf(appended)
-}
-
-private fun List<String>.toTokens(): List<Token> {
-    return this.map { StringToken(it) }
-}
-
-inline class Sentence(val tokens: List<Token>) {
-    fun isEmpty(): Boolean {
-        return tokens.isEmpty()
-    }
-}
-
-sealed class Token
-
-object StartToken : Token()
-data class StringToken(val string: String) : Token()
-object EndToken : Token()
+inline class Sentence(val tokens: List<StringToken>)

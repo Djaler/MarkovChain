@@ -7,11 +7,11 @@ import kotlin.random.Random
  */
 class Markov {
     private val probabilityMatrix = ProbabilityMatrix()
-    private val prefixMaxSize = 3
+    private val prefixMaxSize = 2
 
     fun fillFromText(text: List<Sentence>) {
         for (sentence in text) {
-            val tokens = sentence.tokens
+            val tokens = sentence.tokens.withPrependedAndAppended(StartToken, EndToken)
 
             for (suffixIndex in 1 until tokens.size) {
                 for (prefixSize in 1..prefixMaxSize) {
@@ -80,3 +80,12 @@ class Markov {
     }
 }
 
+fun <T> List<T>.withPrependedAndAppended(prepended: T, appended: T): List<T> {
+    return listOf(prepended) + this + listOf(appended)
+}
+
+sealed class Token
+
+object StartToken : Token()
+data class StringToken(val string: String) : Token()
+object EndToken : Token()
