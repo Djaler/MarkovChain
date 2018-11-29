@@ -31,14 +31,6 @@ class ProbabilityVector {
 
 inline class Probability(val value: Float)
 
-sealed class Prefix
-data class StringPrefix(val strings: List<String?>) : Prefix() {
-    constructor(string: String) : this(listOf(string))
-}
+data class Prefix(val tokens: List<Token>)
 
-object StartPrefix : Prefix()
-
-sealed class Suffix
-data class StringSuffix(val value: String) : Suffix()
-
-object EndSuffix : Suffix()
+data class Suffix(val token: Token)
